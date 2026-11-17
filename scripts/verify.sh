@@ -5,6 +5,13 @@ echo "Xcode version:"
 xcodebuild -version
 echo "Check Xcode project format:"
 plutil -lint CCBCPianist.xcodeproj/project.pbxproj
+echo "Run pure Swift MIDI parser smoke tests:"
+mkdir -p "$PWD/.build-test"
+xcrun swiftc \
+  CCBCPianist/Services/MIDIFileDecoder.swift \
+  Tests/MIDIParserSmoke/main.swift \
+  -o "$PWD/.build-test/midi-parser-smoke"
+"$PWD/.build-test/midi-parser-smoke"
 echo "Build CCBCPianist for Mac (no distribution signing):"
 xcodebuild \
   -project CCBCPianist.xcodeproj \
