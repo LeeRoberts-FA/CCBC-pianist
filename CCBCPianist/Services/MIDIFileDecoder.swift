@@ -140,7 +140,8 @@ struct MIDIFileDecoder {
                     }
                     if meta == 0x2F { break }
                 } else if status == 0xF0 || status == 0xF7 {
-                    _ = try track.take(try track.variable()) // SysEx ignored for instrument safety
+                    let length = try track.variable()
+                    _ = try track.take(length) // SysEx ignored for instrument safety
                 } else if status < 0xF0 {
                     let kind = status & 0xF0
                     let d1 = try track.byte()
