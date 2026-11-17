@@ -1,9 +1,8 @@
 import Foundation
+import Security
 
 struct OllamaModelList: Decodable {
-    struct Model: Decodable {
-        let name: String
-    }
+    struct Model: Decodable { let name: String }
     let models: [Model]
 }
 
@@ -13,120 +12,169 @@ private struct OllamaStreamChunk: Decodable {
     let error: String?
 }
 
-enum OllamaError: LocalizedError {
-    case invalidEndpoint
-    case insecureEndpoint
-    case server(Int)
-    case remote(String)
-    case emptyResponse
+enum OllamaConnectionError: LocalizedError {
+    case invalidAddress
+    case insecureAddress
+    case keychain(OSStatus)
 
     var errorDescription: String? {
         switch self {
-        case .invalidEndpoint:
-            return "Enter a complete Ollama address, such as http://192.168.1.20:11434."
-        case .insecureEndpoint:
-            return "Unencrypted HTTP is allowed only for local, private-LAN or Tailscale addresses. Use HTTPS for other servers."
-        case .server(let code):
-            return "The Ollama server returned HTTP \(code). Verify the address and server status."
-        case .remote(let details):
-            return "Ollama reported an error: \(details)"
-        case .emptyResponse:
-            return "The model completed without any answer. Check the selected model and server logs."
+        case .invalidAddress:
+            return "Use an Ollama server URL such as http://127.0.0.1:11434 or https://your-secure-server.example."
+        case .insecureAddress:
+            return "Remote inference requires HTTPS, or an SSH tunnel through 127.0.0.1. Do not expose Ollama's raw HTTP port on the public internet."
+        case .keychain(let status):
+            return "macOS Keychain could not save the server token (status \(status))."
+        }
+    }
+}
+
+enum OllamaConnection {
+    static let defaultEndpoint = "http://127.0.0.1:11434"
+    private static let preference = "CCBC.Ollama.Endpoint"
+    private static let keychainService = "org.cavecitybaptist.ccbcaipianist.ollama"
+
+    static func savedEndpoint() -> String {
+        UserDefaults.standard.string(forKey: preference) ?? defaultEndpoint
+    }
+
+    static func checkedURL(_ input: String) throws -> URL {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let parts = URLComponents(string: trimmed),
+              let scheme = parts.scheme?.lowercased(),
+              scheme == "https" || scheme == "http",
+              let host = parts.host?.lowercased(),
+              !host.isEmpty, parts.user == nil, parts.password == nil,
+              parts.query == nil, parts.fragment == nil,
+              parts.path.isEmpty || parts.path == "/" else {
+            throw OllamaConnectionError.invalidAddress
+        }
+        // Use local loopback for a directly installed Ollama or for a secure SSH port-forward.
+        if scheme == "http" && host != "localhost" && host != "127.0.0.1" && host != "::1" {
+            throw OllamaConnectionError.insecureAddress
+        }
+        guard let url = parts.url else { throw OllamaConnectionError.invalidAddress }
+        return url
+    }
+
+    private static func keychainQuery(for endpoint: String) -> [String: Any] {
+        [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: endpoint
+        ]
+    }
+
+    static func loadToken(for endpoint: String) -> String {
+        var query = keychainQuery(for: endpoint)
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        query[kSecReturnData as String] = true
+        var item: CFTypeRef?
+        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
+              let data = item as? Data else { return "" }
+        return String(data: data, encoding: .utf8) ?? ""
+    }
+
+    static func save(endpoint: String, token: String) throws {
+        let url = try checkedURL(endpoint)
+        let canonical = url.absoluteString.hasSuffix("/") ? String(url.absoluteString.dropLast()) : url.absoluteString
+        var query = keychainQuery(for: canonical)
+        // Delete previous value so repeated saves do not create duplicate Keychain items.
+        let deleted = SecItemDelete(query as CFDictionary)
+        if deleted != errSecSuccess && deleted != errSecItemNotFound {
+            throw OllamaConnectionError.keychain(deleted)
+        }
+        if !token.isEmpty {
+            query[kSecValueData as String] = Data(token.utf8)
+            let added = SecItemAdd(query as CFDictionary, nil)
+            guard added == errSecSuccess else { throw OllamaConnectionError.keychain(added) }
+        }
+        UserDefaults.standard.set(canonical, forKey: preference)
+    }
+}
+
+enum OllamaRequestError: LocalizedError {
+    case http(Int)
+    case remote(String)
+    case empty
+
+    var errorDescription: String? {
+        switch self {
+        case .http(let code):
+            return "Ollama returned HTTP \(code). Check the server URL, token and installed model."
+        case .remote(let reason):
+            return "Ollama reported: \(reason)"
+        case .empty:
+            return "The model did not return text. Check its server logs or select another model."
         }
     }
 }
 
 struct OllamaService {
-    static let defaultEndpoint = "http://127.0.0.1:11434"
-
-    // Ollama on a private LAN/VPN may use HTTP. Never invite users to expose it on the internet.
-    private func checkedBase(_ rawValue: String) throws -> URL {
-        let raw = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let parts = URLComponents(string: raw),
-              let scheme = parts.scheme?.lowercased(),
-              ["http", "https"].contains(scheme),
-              let hostname = parts.host?.lowercased(),
-              !hostname.isEmpty,
-              parts.user == nil, parts.password == nil,
-              parts.query == nil, parts.fragment == nil,
-              parts.path.isEmpty || parts.path == "/" else {
-            throw OllamaError.invalidEndpoint
-        }
-
-        if scheme == "http" && !isPrivateHost(hostname) {
-            throw OllamaError.insecureEndpoint
-        }
-        guard let url = parts.url else { throw OllamaError.invalidEndpoint }
-        return url
+    private func session() -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 180
+        config.timeoutIntervalForResource = 600
+        config.waitsForConnectivity = false
+        return URLSession(configuration: config)
     }
 
-    private func isPrivateHost(_ host: String) -> Bool {
-        if host == "localhost" || host == "127.0.0.1" || host == "::1"
-            || host.hasSuffix(".local") || host.hasSuffix(".ts.net")
-            || host.hasSuffix(".tailscale.net") || !host.contains(".") {
-            return true
+    private func request(
+        endpoint: String,
+        token: String,
+        path: String,
+        method: String = "GET"
+    ) throws -> URLRequest {
+        let base = try OllamaConnection.checkedURL(endpoint)
+        var request = URLRequest(url: base.appendingPathComponent(path))
+        request.httpMethod = method
+        request.timeoutInterval = method == "GET" ? 15 : 180
+        if !token.isEmpty {
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
-
-        let parts = host.split(separator: ".").compactMap { UInt8($0) }
-        guard parts.count == 4 else { return false }
-
-        let a = Int(parts[0]), b = Int(parts[1])
-        return a == 10
-            || (a == 172 && (16...31).contains(b))
-            || (a == 192 && b == 168)
-            || (a == 100 && (64...127).contains(b))
-            || (a == 127)
+        return request
     }
 
-    private func makeSession() -> URLSession {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.timeoutIntervalForRequest = 180
-        configuration.timeoutIntervalForResource = 600
-        configuration.waitsForConnectivity = false
-        return URLSession(configuration: configuration)
-    }
-
-    func models(endpoint: String) async throws -> [String] {
-        let base = try checkedBase(endpoint)
-        let session = makeSession()
-        defer { session.finishTasksAndInvalidate() }
-
-        var request = URLRequest(url: base.appendingPathComponent("api/tags"))
-        request.timeoutInterval = 15
-
-        let (data, response) = try await session.data(for: request)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard status == 200 else { throw OllamaError.server(status) }
+    func models(endpoint: String, token: String) async throws -> [String] {
+        let session = session()
+        defer { session.invalidateAndCancel() }
+        let req = try request(endpoint: endpoint, token: token, path: "api/tags")
+        let (data, response) = try await session.data(for: req)
+        guard let http = response as? HTTPURLResponse else {
+            throw OllamaRequestError.http(0)
+        }
+        guard http.statusCode == 200 else {
+            throw OllamaRequestError.http(http.statusCode)
+        }
         return try JSONDecoder().decode(OllamaModelList.self, from: data).models.map(\.name)
     }
 
-    // Stream short pieces as soon as the server produces them. AI never calls the MIDI engine.
-    func askStreaming(
+    /// AI can only return prose. It has no dependency on CoreMIDI, piano audio, or playback.
+    func ask(
         endpoint: String,
+        token: String,
         model: String,
         question: String,
-        onToken: @escaping @MainActor (String) -> Void
-    ) async throws {
-        let base = try checkedBase(endpoint)
-        let session = makeSession()
-        defer { session.finishTasksAndInvalidate() }
+        onUpdate: @escaping @MainActor (String) -> Void
+    ) async throws -> String {
+        let session = session()
+        defer { session.invalidateAndCancel() }
 
         let system = """
-        You are a preparation-only assistant for Cave City Baptist Church's AI Pianist.
-        The church references the 2008 LifeWay Baptist Hymnal.
-        Do not claim to have inspected a hymn score unless it was supplied.
-        Do not invent hymn numbers, musical notes, permissions, or verified arrangements.
-        Provide practical, concise, traditional Baptist music-rehearsal advice.
-        You have no access to the audio or MIDI engine, cannot approve imports,
-        and cannot initiate playback.
+        You are the rehearsal-preparation assistant for Cave City Baptist Church's AI Pianist.
+        The church uses the 2008 LifeWay Worship Baptist Hymnal.
+        Do not pretend to have examined an unprovided score.
+        Do not invent hymn numbers, permissions, notes, chords or validated arrangements.
+        Help with traditional Baptist accompaniment, tempo, choir rehearsal and planning.
+        Never represent a generated arrangement as approved.
+        You cannot interact with live MIDI playback, change a hymn's approval, or control a KRONOS.
+        Keep your responses concise and clear.
         """
 
-        var request = URLRequest(url: base.appendingPathComponent("api/generate"))
-        request.httpMethod = "POST"
-        request.timeoutInterval = 180
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/x-ndjson", forHTTPHeaderField: "Accept")
-        request.httpBody = try JSONSerialization.data(withJSONObject: [
+        var req = try request(endpoint: endpoint, token: token, path: "api/generate", method: "POST")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue("application/x-ndjson", forHTTPHeaderField: "Accept")
+        req.httpBody = try JSONSerialization.data(withJSONObject: [
             "model": model,
             "system": system,
             "prompt": question,
@@ -135,29 +183,31 @@ struct OllamaService {
             "options": ["num_ctx": 2048, "num_predict": 320]
         ])
 
-        let (bytes, response) = try await session.bytes(for: request)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard status == 200 else { throw OllamaError.server(status) }
+        let (bytes, response) = try await session.bytes(for: req)
+        guard let http = response as? HTTPURLResponse else {
+            throw OllamaRequestError.http(0)
+        }
+        guard http.statusCode == 200 else {
+            throw OllamaRequestError.http(http.statusCode)
+        }
 
-        var receivedText = false
-
+        var answer = ""
         for try await line in bytes.lines {
             try Task.checkCancellation()
-            guard !line.isEmpty else { continue }
-            guard let data = line.data(using: .utf8) else { continue }
-
+            guard !line.isEmpty, let data = line.data(using: .utf8) else { continue }
             let part = try JSONDecoder().decode(OllamaStreamChunk.self, from: data)
-            if let issue = part.error, !issue.isEmpty {
-                throw OllamaError.remote(issue)
-            }
-            if let token = part.response, !token.isEmpty {
-                receivedText = true
-                await onToken(token)
+            if let error = part.error, !error.isEmpty { throw OllamaRequestError.remote(error) }
+            if let words = part.response, !words.isEmpty {
+                answer += words
+                await onUpdate(answer)
             }
             if part.done == true { break }
         }
 
         try Task.checkCancellation()
-        guard receivedText else { throw OllamaError.emptyResponse }
+        guard !answer.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw OllamaRequestError.empty
+        }
+        return answer
     }
 }
