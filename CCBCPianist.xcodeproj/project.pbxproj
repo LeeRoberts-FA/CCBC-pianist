@@ -1,0 +1,245 @@
+// !$*UTF8*$!
+{
+    archiveVersion = 1;
+    classes = {
+    };
+    objectVersion = 56;
+    objects = {
+
+/* Begin PBXBuildFile section */
+        D00000000000000000000001 /* CCBCPianistApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000001 /* CCBCPianistApp.swift */; };
+        D00000000000000000000002 /* HymnRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000002 /* HymnRecord.swift */; };
+        D00000000000000000000003 /* MIDIFileDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000003 /* MIDIFileDecoder.swift */; };
+        D00000000000000000000004 /* PianoAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000004 /* PianoAudio.swift */; };
+        D00000000000000000000005 /* KronosMIDI.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000005 /* KronosMIDI.swift */; };
+        D00000000000000000000006 /* PlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000006 /* PlaybackEngine.swift */; };
+        D00000000000000000000007 /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000007 /* OllamaService.swift */; };
+        D00000000000000000000008 /* PianistViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000008 /* PianistViewModel.swift */; };
+        D00000000000000000000009 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000009 /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+        C00000000000000000000001 /* CCBCPianistApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/CCBCPianistApp.swift; sourceTree = "<group>"; };
+        C00000000000000000000002 /* HymnRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/HymnRecord.swift; sourceTree = "<group>"; };
+        C00000000000000000000003 /* MIDIFileDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/MIDIFileDecoder.swift; sourceTree = "<group>"; };
+        C00000000000000000000004 /* PianoAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/PianoAudio.swift; sourceTree = "<group>"; };
+        C00000000000000000000005 /* KronosMIDI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/KronosMIDI.swift; sourceTree = "<group>"; };
+        C00000000000000000000006 /* PlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/PlaybackEngine.swift; sourceTree = "<group>"; };
+        C00000000000000000000007 /* OllamaService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/OllamaService.swift; sourceTree = "<group>"; };
+        C00000000000000000000008 /* PianistViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModels/PianistViewModel.swift; sourceTree = "<group>"; };
+        C00000000000000000000009 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/ContentView.swift; sourceTree = "<group>"; };
+        C00000000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+        G00000000000000000000001 /* CCBCPianist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CCBCPianist.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+        E00000000000000000000001 /* Frameworks */ = {
+            isa = PBXFrameworksBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+        B00000000000000000000003 = {
+            isa = PBXGroup;
+            children = (
+                B00000000000000000000005 /* CCBCPianist */,
+                B00000000000000000000004 /* Products */,
+            );
+            sourceTree = "<group>";
+        };
+        B00000000000000000000004 /* Products */ = {
+            isa = PBXGroup;
+            children = (
+                G00000000000000000000001 /* CCBCPianist.app */,
+            );
+            name = Products;
+            sourceTree = "<group>";
+        };
+        B00000000000000000000005 /* CCBCPianist */ = {
+            isa = PBXGroup;
+            children = (
+                C00000000000000000000001 /* CCBCPianistApp.swift */,
+                C00000000000000000000002 /* HymnRecord.swift */,
+                C00000000000000000000003 /* MIDIFileDecoder.swift */,
+                C00000000000000000000004 /* PianoAudio.swift */,
+                C00000000000000000000005 /* KronosMIDI.swift */,
+                C00000000000000000000006 /* PlaybackEngine.swift */,
+                C00000000000000000000007 /* OllamaService.swift */,
+                C00000000000000000000008 /* PianistViewModel.swift */,
+                C00000000000000000000009 /* ContentView.swift */,
+                C00000000000000000000010 /* Info.plist */,
+            );
+            path = CCBCPianist;
+            sourceTree = "<group>";
+        };
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+        B00000000000000000000002 /* CCBCPianist */ = {
+            isa = PBXNativeTarget;
+            buildConfigurationList = F00000000000000000000006 /* Build configuration list for PBXNativeTarget "CCBCPianist" */;
+            buildPhases = (
+                E00000000000000000000002 /* Sources */,
+                E00000000000000000000001 /* Frameworks */,
+                E00000000000000000000003 /* Resources */,
+            );
+            buildRules = (
+            );
+            dependencies = (
+            );
+            name = CCBCPianist;
+            productName = CCBCPianist;
+            productReference = G00000000000000000000001 /* CCBCPianist.app */;
+            productType = "com.apple.product-type.application";
+        };
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+        B00000000000000000000001 /* Project object */ = {
+            isa = PBXProject;
+            attributes = {
+                BuildIndependentTargetsInParallel = YES;
+                LastUpgradeCheck = 1600;
+                TargetAttributes = {
+                    B00000000000000000000002 = {
+                        CreatedOnToolsVersion = 16.0;
+                    };
+                };
+            };
+            buildConfigurationList = F00000000000000000000005 /* Build configuration list for PBXProject "CCBCPianist" */;
+            compatibilityVersion = "Xcode 14.0";
+            developmentRegion = en;
+            hasScannedForEncodings = 0;
+            knownRegions = (en, Base);
+            mainGroup = B00000000000000000000003;
+            productRefGroup = B00000000000000000000004 /* Products */;
+            projectDirPath = "";
+            projectRoot = "";
+            targets = (
+                B00000000000000000000002 /* CCBCPianist */,
+            );
+        };
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+        E00000000000000000000003 /* Resources */ = {
+            isa = PBXResourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+        E00000000000000000000002 /* Sources */ = {
+            isa = PBXSourcesBuildPhase;
+            buildActionMask = 2147483647;
+            files = (
+                D00000000000000000000001 /* CCBCPianistApp.swift in Sources */,
+                D00000000000000000000002 /* HymnRecord.swift in Sources */,
+                D00000000000000000000003 /* MIDIFileDecoder.swift in Sources */,
+                D00000000000000000000004 /* PianoAudio.swift in Sources */,
+                D00000000000000000000005 /* KronosMIDI.swift in Sources */,
+                D00000000000000000000006 /* PlaybackEngine.swift in Sources */,
+                D00000000000000000000007 /* OllamaService.swift in Sources */,
+                D00000000000000000000008 /* PianistViewModel.swift in Sources */,
+                D00000000000000000000009 /* ContentView.swift in Sources */,
+            );
+            runOnlyForDeploymentPostprocessing = 0;
+        };
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+        F00000000000000000000001 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                ALWAYS_SEARCH_USER_PATHS = NO;
+                CLANG_ENABLE_MODULES = YES;
+                CODE_SIGN_STYLE = Automatic;
+                GCC_OPTIMIZATION_LEVEL = 0;
+                MACOSX_DEPLOYMENT_TARGET = 14.0;
+                SDKROOT = macosx;
+                SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+                SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+                SWIFT_VERSION = 5.0;
+            };
+            name = Debug;
+        };
+        F00000000000000000000002 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                ALWAYS_SEARCH_USER_PATHS = NO;
+                CLANG_ENABLE_MODULES = YES;
+                CODE_SIGN_STYLE = Automatic;
+                MACOSX_DEPLOYMENT_TARGET = 14.0;
+                SDKROOT = macosx;
+                SWIFT_COMPILATION_MODE = wholemodule;
+                SWIFT_OPTIMIZATION_LEVEL = "-O";
+                SWIFT_VERSION = 5.0;
+            };
+            name = Release;
+        };
+        F00000000000000000000003 /* Debug */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGN_IDENTITY = "-";
+                CODE_SIGN_STYLE = Automatic;
+                GENERATE_INFOPLIST_FILE = NO;
+                INFOPLIST_FILE = CCBCPianist/Info.plist;
+                LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+                MACOSX_DEPLOYMENT_TARGET = 14.0;
+                PRODUCT_BUNDLE_IDENTIFIER = org.cavecitybaptist.ccbcaipianist;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SDKROOT = macosx;
+                SUPPORTED_PLATFORMS = macosx;
+                SWIFT_VERSION = 5.0;
+            };
+            name = Debug;
+        };
+        F00000000000000000000004 /* Release */ = {
+            isa = XCBuildConfiguration;
+            buildSettings = {
+                CODE_SIGN_IDENTITY = "-";
+                CODE_SIGN_STYLE = Automatic;
+                GENERATE_INFOPLIST_FILE = NO;
+                INFOPLIST_FILE = CCBCPianist/Info.plist;
+                LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
+                MACOSX_DEPLOYMENT_TARGET = 14.0;
+                PRODUCT_BUNDLE_IDENTIFIER = org.cavecitybaptist.ccbcaipianist;
+                PRODUCT_NAME = "$(TARGET_NAME)";
+                SDKROOT = macosx;
+                SUPPORTED_PLATFORMS = macosx;
+                SWIFT_VERSION = 5.0;
+            };
+            name = Release;
+        };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+        F00000000000000000000005 /* Build configuration list for PBXProject "CCBCPianist" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                F00000000000000000000001 /* Debug */,
+                F00000000000000000000002 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+        F00000000000000000000006 /* Build configuration list for PBXNativeTarget "CCBCPianist" */ = {
+            isa = XCConfigurationList;
+            buildConfigurations = (
+                F00000000000000000000003 /* Debug */,
+                F00000000000000000000004 /* Release */,
+            );
+            defaultConfigurationIsVisible = 0;
+            defaultConfigurationName = Release;
+        };
+/* End XCConfigurationList section */
+    };
+    rootObject = B00000000000000000000001 /* Project object */;
+}
