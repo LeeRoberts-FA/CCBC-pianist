@@ -694,10 +694,47 @@ struct ContentView: View {
 
     private var assistantPage: some View {
         VStack(alignment: .leading, spacing: 18) {
-            ConsoleCard("Your local music assistant", detail: "Powered by Ollama") {
-                Text("Prepare rehearsals, discuss hymn structure and organize ideas. Your AI assistant never sends notes to the live instrument.")
+            ConsoleCard("Your hymn preparation assistant", detail: "Local or remote Ollama") {
+                Text("The model can run on another computer or secure server, freeing up your MacBook Neo's RAM. Approved MIDI playback remains local.")
                     .font(.system(size: 13))
                     .foregroundStyle(SanctuaryTheme.muted)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("OLLAMA SERVER")
+                        .font(.system(size: 10, weight: .semibold))
+                        .tracking(1.5)
+                        .foregroundStyle(SanctuaryTheme.muted)
+
+                    TextField("https://server.example.com or http://127.0.0.1:11434", text: $model.ollamaEndpoint)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(model.isAsking)
+                        .onChange(of: model.ollamaEndpoint) { _, _ in
+                            // Never send an old server's token to a new destination.
+                            model.ollamaToken = ""
+                        }
+
+                    SecureField("Optional bearer API token (stored in Keychain)", text: $model.ollamaToken)
+                        .textFieldStyle(.roundedBorder)
+                        .disabled(model.isAsking)
+
+                    HStack(spacing: 11) {
+                        ConsoleAction(
+                            title: "Save connection",
+                            symbol: "checkmark.shield",
+                            tint: SanctuaryTheme.gold
+                        ) { model.saveOllamaConnection() }
+                        .disabled(model.isAsking || model.isCheckingOllama)
+                        Text("Remote: HTTPS. SSH tunnel: 127.0.0.1.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(SanctuaryTheme.muted)
+                    }
+
+                    Text(model.ollamaConnectionStatus)
+                        .font(.system(size: 12))
+                        .foregroundStyle(SanctuaryTheme.muted)
+                        .textSelection(.enabled)
+                }
+                .padding(.vertical, 4)
 
                 HStack {
                     ConsoleAction(
@@ -706,7 +743,7 @@ struct ContentView: View {
                         tint: SanctuaryTheme.slate,
                         foreground: SanctuaryTheme.ivory
                     ) { model.checkOllama() }
-                    .disabled(model.isAsking)
+                    .disabled(model.isAsking || model.isCheckingOllama)
 
                     Spacer(minLength: 14)
 
@@ -743,6 +780,14 @@ struct ContentView: View {
                         emphasized: true
                     ) { model.askAI() }
                     .disabled(model.isAsking || model.isPlaying || model.selectedModel.isEmpty)
+                    if model.isAsking {
+                        ConsoleAction(
+                            title: "Cancel request",
+                            symbol: "xmark.circle",
+                            tint: SanctuaryTheme.slate,
+                            foreground: SanctuaryTheme.ivory
+                        ) { model.cancelAI() }
+                    }
                 }
 
                 Text("RESPONSE")
