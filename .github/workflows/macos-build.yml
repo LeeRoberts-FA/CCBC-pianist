@@ -1,0 +1,25 @@
+name: Native macOS Xcode Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Compile SwiftUI Mac App
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate project and compile
+        run: bash scripts/verify.sh
+      - name: Upload unsigned debug app (successful builds only)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CCBCPianist-macOS-debug-unsigned
+          path: DerivedData/Build/Products/Debug/CCBCPianist.app
+          if-no-files-found: error
