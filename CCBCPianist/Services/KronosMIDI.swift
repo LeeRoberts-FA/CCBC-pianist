@@ -51,8 +51,8 @@ final class KronosMIDI {
         let bytes = [event.status, event.data1, event.data2]
         var packets = MIDIPacketList()
         let first = MIDIPacketListInit(&packets)
-        let added = bytes.withUnsafeBufferPointer { buffer in
-            MIDIPacketListAdd(
+        bytes.withUnsafeBufferPointer { buffer in
+            _ = MIDIPacketListAdd(
                 &packets,
                 MemoryLayout<MIDIPacketList>.size,
                 first,
@@ -61,7 +61,6 @@ final class KronosMIDI {
                 buffer.baseAddress!
             )
         }
-        guard added != nil else { return false }
         return MIDISend(outputPort, endpoint, &packets) == noErr
     }
 
