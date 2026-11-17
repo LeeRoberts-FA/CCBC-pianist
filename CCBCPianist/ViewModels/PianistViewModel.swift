@@ -18,6 +18,10 @@ final class PianistViewModel: ObservableObject {
 
     @Published var models: [String] = []
     @Published var selectedModel = ""
+    @Published var ollamaEndpoint = OllamaConnection.savedEndpoint()
+    @Published var ollamaToken = OllamaConnection.loadToken(for: OllamaConnection.savedEndpoint())
+    @Published var ollamaConnectionStatus = "Local Ollama by default; remote HTTPS or an SSH tunnel also supported."
+    @Published var isCheckingOllama = false
     @Published var aiQuestion = "How should a traditional Baptist hymn be prepared for congregational singing?"
     @Published var aiResponse = "AI is optional and cannot control live piano playback."
     @Published var isAsking = false
@@ -27,6 +31,7 @@ final class PianistViewModel: ObservableObject {
     private let engine: PlaybackEngine
     private let library = HymnLibrary()
     private let ollama = OllamaService()
+    private var aiTask: Task<Void, Never>?
     private var music: [MIDIEvent] = MIDIFileDecoder.fourNoteTest()
 
     var isTest: Bool { selectedHymnID == nil }
@@ -194,25 +199,49 @@ final class PianistViewModel: ObservableObject {
         status = "Stopped. Sustain off and all-notes-off sent."
     }
 
+    @discardableResult
+    func saveOllamaConnection() -> Bool {
+        do {
+            try OllamaConnection.save(endpoint: ollamaEndpoint, token: ollamaToken)
+            ollamaEndpoint = OllamaConnection.savedEndpoint()
+            ollamaConnectionStatus = "Connection saved. The selected server will handle model inference."
+            models = []
+            selectedModel = ""
+            aiResponse = "Connection settings saved. Detect models to continue."
+            return true
+        } catch {
+            ollamaConnectionStatus = "Connection settings error: \(error.localizedDescription)"
+            return false
+        }
+    }
+
     func checkOllama() {
+        guard !isCheckingOllama, !isAsking else { return }
+        guard saveOllamaConnection() else { return }
+        isCheckingOllama = true
+        aiResponse = "Connecting to the selected Ollama server…"
+        let endpoint = ollamaEndpoint
+        let token = ollamaToken
         Task {
+            defer { isCheckingOllama = false }
             do {
-                let found = try await ollama.models()
+                let found = try await ollama.models(endpoint: endpoint, token: token)
                 models = found
-                if !found.contains(selectedModel) {
-                    selectedModel = found.first ?? ""
-                }
+                selectedModel = found.first ?? ""
+                ollamaConnectionStatus = "Connected to Ollama. \(found.count) model(s) available."
                 aiResponse = found.isEmpty
-                    ? "Ollama is running but no model is installed."
-                    : "Ollama connected. Installed models: \(found.joined(separator: ", "))"
+                    ? "Server connected but no model is installed or available."
+                    : "Connected. Choose a model and ask a question."
             } catch {
-                aiResponse = "Ollama isn't available. Piano playback still works. \(error.localizedDescription)"
+                ollamaConnectionStatus = "Unable to connect: \(error.localizedDescription)"
+                aiResponse = ollamaConnectionStatus + " The piano works independently."
             }
         }
     }
 
     func askAI() {
-        guard !selectedModel.isEmpty, !aiQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard !isAsking && !selectedModel.isEmpty,
+              !aiQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             aiResponse = "Choose an installed Ollama model and enter a question."
             return
         }
@@ -220,17 +249,40 @@ final class PianistViewModel: ObservableObject {
             aiResponse = "Wait until playback ends before running the AI assistant."
             return
         }
+
         isAsking = true
-        aiResponse = "Preparing an answer locally…"
+        aiResponse = "Connecting to model… The first response can take time while the server loads it."
+        let endpoint = ollamaEndpoint
+        let token = ollamaToken
         let question = aiQuestion
         let name = selectedModel
-        Task {
-            defer { isAsking = false }
+        aiTask = Task {
+            defer {
+                isAsking = false
+                aiTask = nil
+            }
             do {
-                aiResponse = try await ollama.ask(model: name, question: question)
+                let final = try await ollama.ask(
+                    endpoint: endpoint,
+                    token: token,
+                    model: name,
+                    question: question
+                ) { [weak self] response in
+                    self?.aiResponse = response
+                }
+                aiResponse = final
+            } catch is CancellationError {
+                aiResponse = "AI request cancelled."
             } catch {
-                aiResponse = "Local model request failed: \(error.localizedDescription)"
+                aiResponse = "AI request failed: \(error.localizedDescription) For an 8 GB Mac, try an external inference server or smaller model."
             }
         }
+    }
+
+    func cancelAI() {
+        aiTask?.cancel()
+        aiTask = nil
+        isAsking = false
+        aiResponse = "AI request cancelled."
     }
 }
