@@ -67,7 +67,7 @@ final class KronosMIDI {
 
     func silence(_ endpoint: MIDIEndpointRef) {
         for channel in 0..<16 {
-            for cc: UInt8 in [64, 123, 120] {
+            for cc in [UInt8(64), UInt8(123), UInt8(120)] {
                 _ = send(
                     MIDIEvent(time: 0, status: 0xB0 | UInt8(channel), data1: cc, data2: 0),
                     to: endpoint
