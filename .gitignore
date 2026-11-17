@@ -1,0 +1,11 @@
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+.build/
+Build/
+*.app/
+*.dSYM/
+*.swp
+*.log
+.env
