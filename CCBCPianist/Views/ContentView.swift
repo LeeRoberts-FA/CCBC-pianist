@@ -129,7 +129,7 @@ struct ContentView: View {
                                         : "Approval required",
                                     systemImage: model.selectedRecord?.approved == true ? "checkmark.seal" : "lock"
                                 )
-                                .foregroundStyle(model.selectedRecord?.approved == true ? .green : .orange)
+                                .foregroundStyle(model.selectedRecord?.approved == true ? Color.green : Color.orange)
                             }
                         }
 
