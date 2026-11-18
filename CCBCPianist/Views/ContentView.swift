@@ -738,7 +738,7 @@ struct ContentView: View {
 
                 HStack {
                     ConsoleAction(
-                        title: "Detect local models",
+                        title: "Detect models",
                         symbol: "arrow.clockwise",
                         tint: SanctuaryTheme.slate,
                         foreground: SanctuaryTheme.ivory
@@ -750,12 +750,17 @@ struct ContentView: View {
                     if model.models.isEmpty {
                         StatusTag(title: "NO MODEL SELECTED", symbol: "circle.dotted", accent: SanctuaryTheme.muted)
                     } else {
-                        Picker("Model", selection: $model.selectedModel) {
-                            ForEach(model.models, id: \.self) { name in
+                        Picker("Model", selection: Binding(
+                            get: { model.models.contains(model.selectedModel) ? model.selectedModel : "" },
+                            set: { model.selectedModel = $0 }
+                        )) {
+                            Text("Select a model").tag("")
+                            ForEach(model.models.filter { !$0.isEmpty }, id: \.self) { name in
                                 Text(name).tag(name)
                             }
                         }
                         .frame(maxWidth: 340)
+                        .disabled(model.isAsking || model.isCheckingOllama)
                     }
                 }
             }
@@ -779,7 +784,7 @@ struct ContentView: View {
                         tint: SanctuaryTheme.gold,
                         emphasized: true
                     ) { model.askAI() }
-                    .disabled(model.isAsking || model.isPlaying || model.selectedModel.isEmpty)
+                    .disabled(model.isAsking || model.isPlaying || model.isCheckingOllama || model.selectedModel.isEmpty || !model.models.contains(model.selectedModel))
                     if model.isAsking {
                         ConsoleAction(
                             title: "Cancel request",
