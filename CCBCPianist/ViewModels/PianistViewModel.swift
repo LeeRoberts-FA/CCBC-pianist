@@ -202,12 +202,26 @@ final class PianistViewModel: ObservableObject {
     @discardableResult
     func saveOllamaConnection() -> Bool {
         do {
-            try OllamaConnection.save(endpoint: ollamaEndpoint, token: ollamaToken)
-            ollamaEndpoint = OllamaConnection.savedEndpoint()
-            ollamaConnectionStatus = "Connection saved. The selected server will handle model inference."
-            models = []
-            selectedModel = ""
-            aiResponse = "Connection settings saved. Detect models to continue."
+            let endpoint = try OllamaConnection.validate(ollamaEndpoint).absoluteString
+            let token = ollamaToken.trimmingCharacters(in: .whitespacesAndNewlines)
+            let previousEndpoint = OllamaConnection.savedEndpoint()
+            let previousToken = OllamaConnection.loadToken(for: previousEndpoint)
+            let changed = endpoint != previousEndpoint || token != previousToken
+
+            if changed {
+                try OllamaConnection.save(endpoint: endpoint, token: token)
+                // A different server or credential must be checked before use.
+                selectedModel = ""
+                models = []
+                ollamaConnectionStatus = "Connection saved. Detect models on the selected server."
+                aiResponse = "Connection settings changed. Detect models to continue."
+            } else {
+                // Saving the same connection must not discard discovery or
+                // the user's model selection, or overwrite a completed answer.
+                ollamaConnectionStatus = models.isEmpty
+                    ? "Connection saved. Detect models to continue."
+                    : "Connection saved. \(models.count) detected model(s) retained."
+            }
             return true
         } catch {
             ollamaConnectionStatus = "Connection settings error: \(error.localizedDescription)"
@@ -220,19 +234,22 @@ final class PianistViewModel: ObservableObject {
         guard saveOllamaConnection() else { return }
         isCheckingOllama = true
         aiResponse = "Connecting to the selected Ollama server…"
-        let endpoint = ollamaEndpoint
-        let token = ollamaToken
+        let endpoint = OllamaConnection.savedEndpoint()
+        let token = OllamaConnection.loadToken(for: endpoint)
+        let previousModel = selectedModel
         Task {
             defer { isCheckingOllama = false }
             do {
                 let found = try await ollama.models(endpoint: endpoint, token: token)
+                selectedModel = found.contains(previousModel) ? previousModel : (found.first ?? "")
                 models = found
-                selectedModel = found.first ?? ""
                 ollamaConnectionStatus = "Connected to Ollama. \(found.count) model(s) available."
                 aiResponse = found.isEmpty
                     ? "Server connected but no model is installed or available."
                     : "Connected. Choose a model and ask a question."
             } catch {
+                selectedModel = ""
+                models = []
                 ollamaConnectionStatus = "Unable to connect: \(error.localizedDescription)"
                 aiResponse = ollamaConnectionStatus + " The piano works independently."
             }
@@ -240,7 +257,8 @@ final class PianistViewModel: ObservableObject {
     }
 
     func askAI() {
-        guard !isAsking && !selectedModel.isEmpty,
+        guard !isAsking, !isCheckingOllama, !selectedModel.isEmpty,
+              models.contains(selectedModel),
               !aiQuestion.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             aiResponse = "Choose an installed Ollama model and enter a question."
             return
@@ -250,10 +268,16 @@ final class PianistViewModel: ObservableObject {
             return
         }
 
+        let endpoint = OllamaConnection.savedEndpoint()
+        let token = OllamaConnection.loadToken(for: endpoint)
+        guard (try? OllamaConnection.validate(ollamaEndpoint).absoluteString) == endpoint,
+              ollamaToken.trimmingCharacters(in: .whitespacesAndNewlines) == token else {
+            aiResponse = "Connection settings changed. Save the connection and detect models before asking."
+            return
+        }
+
         isAsking = true
         aiResponse = "Connecting to model… The first response can take time while the server loads it."
-        let endpoint = ollamaEndpoint
-        let token = ollamaToken
         let question = aiQuestion
         let name = selectedModel
         aiTask = Task {
