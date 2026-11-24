@@ -16,6 +16,7 @@
         D00000000000000000000007 /* OllamaService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000007 /* OllamaService.swift */; };
         D00000000000000000000008 /* PianistViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000008 /* PianistViewModel.swift */; };
         D00000000000000000000009 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000009 /* ContentView.swift */; };
+        D0000000000000000000000A /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000011 /* AppIcon.icns */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
         C00000000000000000000009 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/ContentView.swift; sourceTree = "<group>"; };
         C00000000000000000000010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
         G00000000000000000000001 /* CCBCPianist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CCBCPianist.app; sourceTree = BUILT_PRODUCTS_DIR; };
+        C00000000000000000000011 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,6 +74,7 @@
                 C00000000000000000000008 /* PianistViewModel.swift */,
                 C00000000000000000000009 /* ContentView.swift */,
                 C00000000000000000000010 /* Info.plist */,
+                C00000000000000000000011 /* AppIcon.icns */,
             );
             path = CCBCPianist;
             sourceTree = "<group>";
@@ -130,6 +133,7 @@
             isa = PBXResourcesBuildPhase;
             buildActionMask = 2147483647;
             files = (
+                D0000000000000000000000A /* AppIcon.icns in Resources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };
