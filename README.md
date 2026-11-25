@@ -1,6 +1,8 @@
 # Cave City Baptist Church — AI Pianist
 
-![Project branding](assets/branding/banner.svg)
+![Project branding](assets/branding/portfolio-cover.jpeg)
+
+*Illustrative concept artwork, not an actual application screenshot. Consult the implementation status below for verified capabilities.*
 
 Native **macOS SwiftUI** application for the **MacBook Neo (Apple A18 Pro)** and a **Korg KRONOS** using USB-MIDI. Developed separately from LXRION, OWI, and the church website.
 
