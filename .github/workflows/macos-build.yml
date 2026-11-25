@@ -10,10 +10,13 @@ jobs:
   build:
     name: Compile SwiftUI Mac App
     runs-on: macos-15
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Validate project and compile
         run: bash scripts/verify.sh
       - name: Upload unsigned debug app (successful builds only)
